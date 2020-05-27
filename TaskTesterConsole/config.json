@@ -1,0 +1,12 @@
+{
+  "Source": "main", // назва файлу вхідного файлу без розширення, наприклад: main, task1,
+  "TestName": "test", // назва тестового файлу без розширення та номеру, наприклад TEST, TESTFILE
+  "TestType": "test", // тип тестового файлу наприклад з крапкою, наприклад .test, .dat, .txt
+  "CountOfTests": 4, // кількість тестів
+  "TimeLimit": 2000, // ліміт часу на 1 тест 1000 = 1 секунда
+
+
+  // Шлях до компіляторів
+  "CPPCompiler": "/c C:\\TDM-GCC-64\\bin\\g++.exe", // с++
+  "PascalCompiler": "/c C:\\FPC\\3.0.4\\bin\\i386-win32\\ppcrossx64.exe" // pascal
+}
