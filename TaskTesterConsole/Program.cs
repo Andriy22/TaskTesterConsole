@@ -14,9 +14,16 @@ namespace TaskTesterConsole
     {
         static void Main(string[] args)
         {
+                Console.Title = "TASK TESTER BETA";
 
-            Parallel.Invoke((() =>
-            {
+                Logger("Привiт!", ConsoleColor.Cyan);
+                Logger("Версiя: 0.1 BETA", ConsoleColor.Cyan);
+                Logger(@"GIT репозиторiй: https://github.com/Andriy22/TaskTesterConsole", ConsoleColor.Cyan);
+                Logger("Автор: Andriy Alexandruk", ConsoleColor.Cyan);
+                Logger("Всi налаштування знаходяться в файлi [ CFG/config.json ]", ConsoleColor.DarkYellow);
+                Console.WriteLine();
+                Console.WriteLine();
+
                 try
                 {
                     var config = new Config();
@@ -31,30 +38,34 @@ namespace TaskTesterConsole
 
                     config = JsonConvert.DeserializeObject<Config>(cfgData);
 
+                    if (!config.SkipWelcome)
+                    {
+                        Console.WriteLine("Press any key to continue...");
+                        Console.ReadKey();
+                    }
+                      
+                    Console.Clear();
+                    Logger("[IНФО] - Запуск системи тестування... ", ConsoleColor.DarkYellow);
 
-                    Console.WriteLine("[IНФО] - Запуск системи тестування... ");
 
+                    Compile(config);
 
-                    Compile(config, ".cpp");
+                    Console.WriteLine("Press any key to exit...");
+                    Console.ReadKey();
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("[Помилка] - Полимлка! [" +  e.Message +"]");
+                    Logger("[Помилка] - Полимлка![" +  e.Message +"]", ConsoleColor.Red);
                     return;
                 }
 
 
 
-            }));
-
-        
-
-            Console.ReadLine();
 
         }
 
 
-        public static void Compile(Config config, string type)
+        public static void Compile(Config config)
         {
             var outputFile = "main.exe";
 
@@ -66,44 +77,58 @@ namespace TaskTesterConsole
 
 
 
-            if (File.Exists(config.Source + type))
 
 
-                Console.WriteLine("[iНФО] - Файл знайдено.");
+            Logger("[iНФО] - Файл знайдено.", ConsoleColor.Green);
 
                 Process process = new System.Diagnostics.Process();
                 ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
                 startInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 startInfo.FileName = "cmd.exe";
-                startInfo.Arguments = config.CPPCompiler + ' ' + config.Source + ".cpp" +
-                                      " -static-libstdc++ -static-libgcc -o " + outputFile;
+                if (File.Exists(config.Source + ".cpp"))
+                {
+                    startInfo.Arguments = config.CPPCompiler + ' ' + config.Source + ".cpp" +
+                                          " -static-libstdc++ -static-libgcc -o " + outputFile;
+                }
+                   
+                else if (File.Exists(config.Source + ".pas"))
+                {
+                    outputFile = config.Source + ".exe";
+                    startInfo.Arguments = config.PascalCompiler + ' ' + config.Source + ".pas";
+                }
+                   
 
 
-                Console.WriteLine("[IНФО] - Копiляцiя...");
+                Logger("[iНФО] - Компiляцiя...", ConsoleColor.DarkYellow);
 
 
                 process.StartInfo = startInfo;
                 process.Start();
 
-                Thread.Sleep(2000);
+                Thread.Sleep(3000);
                 if (File.Exists(outputFile))
                 {
-                    Console.WriteLine("Файл " + outputFile + " створено!");
+                    Logger("Файл " + outputFile + " створено!", ConsoleColor.Green);
 
-
+                    Logger("[INFO] - Будь ласка, зачекайте! Запускаємо тестування...", ConsoleColor.Cyan);
+                    
+                    Thread.Sleep(1500);
+                    
+                  
+                    
                     for (int i = 1; i <= config.CountOfTests; i++)
                     {
                         Console.WriteLine();
                         Console.WriteLine("==============================");
 
-                        if (TaskExecutor(outputFile, "output.rez", "test" + i + ".test", config.TimeLimit, "test" + i + ".dat"))
+                        if (TaskExecutor(outputFile,  config.TestOutputName + i + config.TestOutputType, config.TimeLimit, config.TestInputName + i + config.TestInputType, config))
                         {
-                            Console.WriteLine("[Успiх] - Тест " + i + " успiшно пройдено.");
+                            Logger("[Успiх] - Тест " + i + " успiшно пройдено.", ConsoleColor.Green);
                             countOfPassed++;
                         }
                         else
-                        {
-                            Console.WriteLine("[Фейл] - Тест " + i + " провалено.");
+                        { 
+                            Logger("[Фейл] - Тест " + i + " провалено.", ConsoleColor.Red);
                         }
 
                         Console.WriteLine("[Прогрес] - " + Convert.ToDouble(i) / config.CountOfTests * 100 + "%");
@@ -117,12 +142,15 @@ namespace TaskTesterConsole
 
                     Console.WriteLine("Кiлькiсть успiшних тестiв: " + countOfPassed + " з " + config.CountOfTests + " - " +
                                       Convert.ToDouble(countOfPassed) / config.CountOfTests * 100 + "%");
-
+                    Console.WriteLine();
                     File.Delete(outputFile);
+
+
+                    
                 }
                 else
                 {
-                    Console.WriteLine("[Помилка] - файл ("+ config.Source + type +") не знайдено!!!");
+                    Console.WriteLine("[Помилка] - файл ("+ config.Source +".exe) не знайдено!!!");
                 }
 
         }
@@ -130,7 +158,7 @@ namespace TaskTesterConsole
     
 
 
-        public static bool  TaskExecutor (string programName, string resultFile, string testName, int timeLimit, string inputTestFile)
+        public static bool  TaskExecutor (string programName, string testName, int timeLimit, string inputTestFile, Config config)
         {
 
             var resultData = "";
@@ -142,7 +170,7 @@ namespace TaskTesterConsole
                 return false;
             }
 
-            using (var stream = File.Open("input.dat", FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read))
+            using (var stream = File.Open(config.InputFile, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read))
             {
                 stream.Write(Encoding.UTF8.GetBytes(File.ReadAllText("INPUT//" + inputTestFile)));
             }
@@ -184,25 +212,34 @@ namespace TaskTesterConsole
 
 
 
-            if (!File.Exists(resultFile))
+            if (!File.Exists(config.OutputFile))
                 return false;
             else
-                resultData = File.ReadAllText(resultFile);
+                resultData = File.ReadAllText(config.OutputFile);
 
-            if (resultData == testData)
+            if (resultData.Trim() == testData.Trim())
             {
-                File.Delete(resultFile);
-                File.Delete("input.dat");
+                File.Delete(config.OutputFile);
+                File.Delete(config.InputFile);
                 return true;
             }
             else
             {
-                File.Delete(resultFile);
-                File.Delete("input.dat");
+                File.Delete(config.OutputFile);
+                File.Delete(config.InputFile);
                 return false;
             }
               
 
+        }
+
+
+
+        private static void Logger(object text, ConsoleColor color)
+        {
+            Console.ForegroundColor = color;
+            Console.WriteLine(text.ToString());
+            Console.ResetColor();
         }
     }
 }
