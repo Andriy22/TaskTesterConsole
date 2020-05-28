@@ -1,0 +1,21 @@
+{
+  "SkipWelcome": false, // пропустити привітання,
+
+  "Source": "main", // назва файлу вхідного файлу без розширення, наприклад: main, task1,
+
+  "TestInputName": "test", // назва вхідного тестового файлу без розширення та номеру, наприклад TEST, TESTFILE
+  "TestInputType": ".dat", // тип вхідного тестового файлу з крапкою, наприклад .test, .dat, .txt
+
+  "TestOutputName": "test", // назва вихідного тестового файлу без розширення та номеру, наприклад TEST, TESTFILE
+  "TestOutputType": ".test", // тип вихідного тестового файлу з крапкою, наприклад .test, .dat, .txt
+
+  "InputFile": "input.dat", // Вихідний файл в який створює програма яка тестується
+  "OutputFile": "output.rez", // Вихідний файл в який створює програма яка тестується
+
+  "CountOfTests": 10, // кількість тестів
+  "TimeLimit": 2000, // ліміт часу на 1 тест 1000 = 1 секунда
+
+  // Шлях до компіляторів
+  "CPPCompiler": "/c C:\\TDM-GCC-64\\bin\\g++.exe", // с++
+  "PascalCompiler": "/c C:\\FPC\\3.0.4\\bin\\i386-win32\\ppcrossx64.exe" // pascal
+}
